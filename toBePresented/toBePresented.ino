@@ -1,12 +1,16 @@
 //PIN CONNECTIONS
 int sensor = A4;
+int forwardMotor=6;
+int backwardMotor=5;
 
-int lockState=0, limSensorReading=-1024, timeLeft=300, timeExtended=120;
+int lockState=0, limSensorReading=-1024, timeLeft=90, timeExtended=100, firstRise=0;
+unsigned long tlStart=0, tlCurrent=0, teStart=0, teCurrent=0; 
+
 
 //MENU 0 VARIABLES
 int printState=0, inputState=0, printRepeat=0, inputRepeat=0;
 char input[20], temp, id[20], password[20], user_id[20]="user@advec", user_password[20]="user@123", ss_id[20]="ss@advec", ss_password[20]="ss@123", pcb_id[20]="pcb@advec", pcb_password[20]="pcb@123";
-int loginType=0, i=0, temp2=0, check=0, tookPass=0, menuStatus=1;
+int loginType=0, i=0, temp2=0, check=0, tookPass=0, menuStatus=0;
 
 //MENU 1 VARIABLES
 int userPrintRepeat=0, userPrintState=0, userInputState=0, userChoice=0, userSensorReading, userTimeExtendPerm=0;
@@ -14,11 +18,17 @@ char veh_id[15]="PB11 A 1111";
 
 void setup() 
 {
- Serial.begin(9600);
+  pinMode(forwardMotor,OUTPUT);
+  pinMode(backwardMotor,OUTPUT);
+  pinMode(sensor,INPUT);
+  analogWrite(forwardMotor, 0);
+  analogWrite(backwardMotor, 0);
+  Serial.begin(9600);
 }
 
 void loop() 
 {
+  checkEmissions();
   if(menuStatus==0)
   {
     printStuff();
@@ -33,6 +43,8 @@ void loop()
     userPrintStuff();
     userInputStuff();
   }
+
+  
 }
 
 
@@ -229,6 +241,10 @@ void userPrintStuff()
       Serial.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nWELCOME TO USER PORTAL");
       Serial.print("\nThe registration number of your vehicle is ");
       Serial.println(veh_id);
+      if(lockState==1)
+      {
+        Serial.println("Your vehicle is forced to come to a halt\n");
+      }
       Serial.println("\nChoose an action to perform\n");
       Serial.println("1.Display current emission levels\n");
       Serial.println("2.Logout\n");
@@ -257,7 +273,14 @@ void userPrintStuff()
           else
           {
             Serial.print("\nYour vehicle will be forced to come to halt in ");
-            Serial.print(timeLeft);
+            if(userTimeExtendPerm==0)
+            {
+              Serial.print(timeLeft-((millis()-tlStart)/1000.0));
+            }
+            else
+            {
+              Serial.print(timeExtended-((millis()-teStart)/1000.0));
+            }
             Serial.println(" seconds\n");
           }
           Serial.println("Kindly move your vehicle to the nearest Service Center as soon as possible");
@@ -267,12 +290,20 @@ void userPrintStuff()
         userPrintState=userInputState=userChoice=0;
         userPrintRepeat=-1;
       }
-      else if(userChoice==3 && userTimeExtendPerm==0)
+      else if(userChoice==3 && userTimeExtendPerm==0 && lockState==1)
       {
         Serial.print("\nYou have been granted an extended period of ");
-        Serial.println(timeExtended);
+        Serial.print(timeExtended);
+        Serial.println(" seconds\n");
+        //FUNCTIONALITY
+        teStart=millis();
+        analogWrite(backwardMotor,255);
+        delay(3000);
+        analogWrite(backwardMotor,0);
+        lockState=0;
+        //FUNCTIONALITY
         Serial.println("\nRedirecting to Home Page in 5 seconds");
-        delay(5000);
+        delay(2000);
         userPrintState=userInputState=userChoice=0;
         userPrintRepeat=-1;
         userTimeExtendPerm=1;
@@ -313,4 +344,50 @@ void userInputStuff()
       temp2=0;
     }
   }
+}
+
+
+//EMMISIONS CHECK
+
+void checkEmissions()
+{
+  userSensorReading=analogRead(sensor);
+  if(userSensorReading>limSensorReading && lockState==0 && firstRise==0)
+  {
+    firstRise=1;
+    tlStart=millis();
+  }
+  if(userSensorReading<limSensorReading && lockState==0 && firstRise==1 && userTimeExtendPerm==0 )
+  {
+    firstRise=0;
+  }
+  if(userSensorReading>limSensorReading && lockState==0 && firstRise==1 && userTimeExtendPerm==0 )
+  {
+    tlCurrent=millis();
+    if((tlCurrent-tlStart)>(timeLeft*1000))
+    {
+      analogWrite(forwardMotor,255);
+      delay(3000);
+      analogWrite(forwardMotor,0);
+      lockState=1;
+    }
+  }
+  if(userTimeExtendPerm==1 && lockState==0 && userSensorReading<limSensorReading)
+  {
+    userTimeExtendPerm=0;
+    firstRise=0;
+  }
+  if(userTimeExtendPerm==1 && lockState==0 && userSensorReading>limSensorReading)
+  {
+    teCurrent = millis();
+    if((teCurrent-teStart)>(timeExtended*1000))
+    {
+      analogWrite(forwardMotor,255);
+      delay(3000);
+      analogWrite(forwardMotor,0);
+      lockState=1;
+    }
+
+  }
+
 }
