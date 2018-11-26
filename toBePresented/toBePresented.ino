@@ -1,7 +1,7 @@
 int printState=0, inputState=0, printRepeat=0, inputRepeat=0;
 //char input=NULL;
-char input[20], temp, id[20], password[20];
-int loginType=0, i=0, temp2=0;
+char input[20], temp, id[20], password[20], user_id[20]="user@advec", user_password[20]="user@123", ss_id[20]="ss@advec", ss_password[20]="ss@123", pcb_id[20]="pcb@advec", pcb_password[20]="pcb@123";
+int loginType=0, i=0, temp2=0, check=0, tookPass=0;
 void setup() 
 {
  Serial.begin(9600);
@@ -11,6 +11,10 @@ void loop()
 {
   printStuff();
   inputStuff();
+  if(check==1 && tookPass==1)
+  {
+    checkCredentials();
+  }
 }
 
 void inputStuff()
@@ -80,6 +84,7 @@ void inputStuff()
       printRepeat--;
       temp2=0;
       Serial.println(password);
+      tookPass=1;
     }
   } 
 }
@@ -104,19 +109,22 @@ void printStuff()
           if(loginType==1)
           {
             Serial.println("You want to login as a user");
+            check=1;
           }
           else if(loginType==2)
           {
             Serial.println("You want to login as a Service Center In-Charge");
+            check=1;
           }
           else if(loginType==3)
           {
             Serial.println("You want to login as a Pollution Control Board Representative");
+            check=1;
           }
           else if(loginType!=NULL)
           {
             Serial.println("Wrong Input\nRedirecting to Home Page");
-            printState=inputState=printRepeat=inputRepeat=0;
+            printState=inputState=printRepeat=inputRepeat=loginType=0;
             return;
           }
           printState=2;
@@ -129,9 +137,63 @@ void printStuff()
      }
     else if(printState==3)
     {
-      Serial.println("Please enter your password\n");
-        printState=4; 
+       Serial.println("Please enter your password\n");
+        printState=4;
     }
       printRepeat++;
   }
 }
+
+
+
+void checkCredentials()
+{
+  if(loginType==1)
+  {
+    if(strcmp(id,user_id)==0 && strcmp(password,user_password)==0)
+    {
+      Serial.println("\nLogin successfull\n");
+      check=0;
+      tookPass=0;
+    }
+    else
+    {
+      Serial.println("\nLogin Unsuccessfull!!!\nWrong ID or PASSWORD\nRedirecting to Home Page");
+      printState=inputState=printRepeat=inputRepeat=loginType=check=tookPass=0;
+      return;
+    }
+      
+  }
+  if(loginType==2)
+  {
+    if(strcmp(id,ss_id)==0 && strcmp(password,ss_password)==0)
+    {
+      Serial.println("\nLogin successfull\n");
+      check=tookPass=0;
+    }
+    else
+    {
+      Serial.println("\nLogin Unsuccessfull!!!\nWrong ID or PASSWORD\nRedirecting to Home Page");
+      printState=inputState=printRepeat=inputRepeat=loginType=tookPass=check=0;
+      return;
+    }
+      
+  }
+  if(loginType==3)
+  {
+    if(strcmp(id,pcb_id)==0 && strcmp(password,pcb_password)==0)
+    {
+      Serial.println("\nLogin successfull\n");
+      check=tookPass=0;
+    }
+    else
+    {
+      Serial.println("\nLogin Unsuccessfull!!!\nWrong ID or PASSWORD\nRedirecting to Home Page");
+      printState=inputState=printRepeat=inputRepeat=loginType=tookPass=check=0;
+      return;
+    }
+      
+  }
+}
+      
+  
