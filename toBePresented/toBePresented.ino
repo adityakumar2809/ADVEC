@@ -1,5 +1,7 @@
 int printState=0, inputState=0, printRepeat=0, inputRepeat=0;
-char input=NULL;
+//char input=NULL;
+char input[20], temp, id[20], password[20];
+int loginType=0, i=0, temp2=0;
 void setup() 
 {
  Serial.begin(9600);
@@ -15,13 +17,71 @@ void inputStuff()
 {
   if(inputState==0)
   {
-    if(Serial.available()>0)
+    while(Serial.available()>0)
     {
-      input=Serial.read();
-      inputState=1;
-      printRepeat=0;
+      temp=Serial.read();
+      if(temp!='\r' && i<19)
+      {
+        input[i++]=temp;
+      }
+      temp2=1;
+    }
+    if(temp2==1)
+    {
+      input[i]='\0';
+      i=0;
+      inputState++;
+      printRepeat--;
+      loginType = atoi(input);
+      temp2=0;
     }
   }
+  else if(inputState==1)
+  {
+    while(Serial.available()>0)
+    {
+      
+      temp=Serial.read();
+      if(temp!='\r' && i<19)
+      {
+        id[i++]=temp;
+      }
+      temp2=1;
+      delay(1);
+    }
+    if(temp2==1)
+    {
+      id[i]='\0';
+      i=0;
+      inputState++;
+      printRepeat--;
+      temp2=0;
+      Serial.println(id);
+    }
+  }
+  else if(inputState==2)
+  {
+    while(Serial.available()>0)
+    {
+      
+      temp=Serial.read();
+      if(temp!='\r' && i<19)
+      {
+        password[i++]=temp;
+      }
+      temp2=1;
+      delay(1);
+    }
+    if(temp2==1)
+    {
+      password[i]='\0';
+      i=0;
+      inputState++;
+      printRepeat--;
+      temp2=0;
+      Serial.println(password);
+    }
+  } 
 }
 
 
@@ -41,24 +101,37 @@ void printStuff()
       }
       else if(printState==1)
       {
-          if(input=='1')
+          if(loginType==1)
           {
             Serial.println("You want to login as a user");
           }
-          else if(input=='2')
+          else if(loginType==2)
           {
             Serial.println("You want to login as a Service Center In-Charge");
           }
-          else if(input=='3')
+          else if(loginType==3)
           {
             Serial.println("You want to login as a Pollution Control Board Representative");
           }
-          else if(input!=NULL)
+          else if(loginType!=NULL)
           {
             Serial.println("Wrong Input\nRedirecting to Home Page");
+            printState=inputState=printRepeat=inputRepeat=0;
+            return;
           }
           printState=2;
+          printRepeat--;
       }
-      printRepeat=1;
+     else if(printState==2)
+     {
+       Serial.println("Please enter your login id\n");
+       printState=3;
+     }
+    else if(printState==3)
+    {
+      Serial.println("Please enter your password\n");
+        printState=4; 
+    }
+      printRepeat++;
   }
 }
