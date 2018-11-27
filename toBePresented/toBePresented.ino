@@ -3,7 +3,7 @@ int sensor = A4;
 int forwardMotor=6;
 int backwardMotor=5;
 
-int lockState=0, limSensorReading=-1024, timeLeft=90, timeExtended=100, firstRise=0;
+int lockState=0, limSensorReading=-1024, timeLeft=90, timeExtended=100, firstRise=0, finalLock=0;
 unsigned long tlStart=0, tlCurrent=0, teStart=0, teCurrent=0; 
 
 
@@ -14,7 +14,14 @@ int loginType=0, i=0, temp2=0, check=0, tookPass=0, menuStatus=0;
 
 //MENU 1 VARIABLES
 int userPrintRepeat=0, userPrintState=0, userInputState=0, userChoice=0, userSensorReading, userTimeExtendPerm=0;
-char veh_id[15]="PB11 A 1111";
+char veh_reg[15]="PB11 A 1111";
+
+//MENU 2 VARIABLES
+int ssPrintRepeat=0, ssPrintState=0, ssInputState=0, ssChoice=0, ssDue=0;
+char ss_reg[15]="PNB0025875", ss_veh_reg[15];
+
+//MENU 3 VARIABLES
+int ssPrintRepeat=0, pcbPrintState=0, pcbInputState=0, pcbChoice=0;
 
 void setup() 
 {
@@ -42,6 +49,16 @@ void loop()
   {
     userPrintStuff();
     userInputStuff();
+  }
+  else if(menuStatus==2)
+  {
+    ssPrintStuff();
+    ssInputStuff();
+  }
+  else if(menuStatus==3)
+  {
+    pcbPrintStuff();
+    pcbInputStuff();
   }
 
   
@@ -203,6 +220,7 @@ void checkCredentials()
     {
       Serial.println("\nLogin successfull\n");
       check=tookPass=0;
+      menuStatus=2;
     }
     else
     {
@@ -218,6 +236,7 @@ void checkCredentials()
     {
       Serial.println("\nLogin successfull\n");
       check=tookPass=0;
+      menuStatus=3;
     }
     else
     {
@@ -240,7 +259,7 @@ void userPrintStuff()
     {
       Serial.println("\n\n\n\n\n\n\n\n\n\n\n\n\n\n\nWELCOME TO USER PORTAL");
       Serial.print("\nThe registration number of your vehicle is ");
-      Serial.println(veh_id);
+      Serial.println(veh_reg);
       if(lockState==1)
       {
         Serial.println("Your vehicle is forced to come to a halt\n");
@@ -310,6 +329,7 @@ void userPrintStuff()
       }
       else
       {
+        Serial.println("\nLogged out Successfully");
         Serial.println("\nRedirecting to Home Page");
         printState=inputState=printRepeat=inputRepeat=loginType=0;
         userPrintState=userInputState=userPrintRepeat=userChoice=menuStatus=0;
@@ -386,8 +406,123 @@ void checkEmissions()
       delay(3000);
       analogWrite(forwardMotor,0);
       lockState=1;
+      finalLock=1;
     }
 
   }
 
+}
+
+
+//MENU 2 STARTS
+
+void ssPrintStuff()
+{
+  if(ssPrintRepeat==0)
+  {
+    if(ssPrintState==0)
+    {
+      Serial.println("\n\n\n\n\n\n\n\n\nWELCOME TO SERVICE CENTRE PORTAL");
+      Serial.print("The registration number of the Service Centre is ");
+      Serial.println(ss_reg);
+      Serial.println("\nChoose an action to perform\n");
+      Serial.println("\n1.Add a new entry");
+      Serial.println("\n2.Logout");
+      ssPrintState++;
+    }
+    else if(ssPrintState==1)
+    {
+      if(ssChoice==1)
+      {
+        Serial.println("\n\nEnter the registration number of the vehicle being repaired");
+        ssPrintState++;
+      }
+      else
+      {
+        Serial.println("\nLogged out Successfully");
+        Serial.println("\nRedirecting to Home Page");
+        printState=inputState=printRepeat=inputRepeat=loginType=0;
+        ssPrintState=ssInputState=ssPrintRepeat=ssChoice=menuStatus=0;
+      }
+    }
+    else if(ssPrintState==2)
+    {
+       Serial.print("\n\n\n\nThe registration number of the vehicle is ");
+       Serial.println(ss_veh_reg);
+       if(finalLock==0)
+        {
+          Serial.println("\n\nVehicle repaired successfully");
+        }
+        else
+        {
+          Serial.println("\n\nVehicle repaired too late. Requires PCB examination before running");
+          ssDue++;
+        }
+        Serial.println("\nRedirecting to Home Page in 5 seconds");
+        delay(5000);
+        ssPrintState=ssInputState=ssChoice=0;
+        ssPrintRepeat=-1;
+
+    }
+
+    ssPrintRepeat++;
+  }
+}
+
+
+void ssInputStuff()
+{
+  if(ssInputState==0)
+  {
+    while(Serial.available()>0)
+    {
+      temp=Serial.read();
+      if(temp!='\r' && i<19)
+      {
+        input[i++]=temp;
+      }
+      temp2=1;
+    }
+    if(temp2==1)
+    {
+      input[i]='\0';
+      i=0;
+      ssInputState++;
+      ssPrintRepeat--;
+      ssChoice = atoi(input);
+      temp2=0;
+    }
+  }
+
+  if(ssInputState==1)
+  {
+     while(Serial.available()>0)
+    {
+      temp=Serial.read();
+      if(temp!='\r' && i<19)
+      {
+        ss_veh_reg[i++]=temp;
+      }
+      temp2=1;
+      delay(1);
+    }
+    if(temp2==1)
+    {
+      ss_veh_reg[i]='\0';
+      i=0;
+      ssInputState++;
+      ssPrintRepeat--;
+      temp2=0;
+      if(strcmp(veh_reg,ss_veh_reg)!=0)
+      {
+        Serial.print("\nNo records found for the vehicle ");
+        Serial.println(ss_veh_reg);
+        Serial.println("\nKindly recheck the entered field");
+        Serial.println("\nRedirecting to Home Page in 5 seconds");
+        delay(5000);
+        ssPrintState=ssInputState=ssChoice=0;
+        ssPrintRepeat=0;
+      }
+    }
+  }
 }
