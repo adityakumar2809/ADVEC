@@ -21,7 +21,8 @@ int ssPrintRepeat=0, ssPrintState=0, ssInputState=0, ssChoice=0, ssDue=0;
 char ss_reg[15]="PNB0025875", ss_veh_reg[15];
 
 //MENU 3 VARIABLES
-int ssPrintRepeat=0, pcbPrintState=0, pcbInputState=0, pcbChoice=0;
+int pcbPrintRepeat=0, pcbPrintState=0, pcbInputState=0, pcbChoice=0, pcbPerm=0, pcbChangeChoice=0;
+char pcb_veh_reg[15];pcb_veh_reg
 
 void setup() 
 {
@@ -59,9 +60,7 @@ void loop()
   {
     pcbPrintStuff();
     pcbInputStuff();
-  }
-
-  
+  } 
 }
 
 
@@ -410,7 +409,6 @@ void checkEmissions()
     }
 
   }
-
 }
 
 
@@ -522,6 +520,267 @@ void ssInputStuff()
         delay(5000);
         ssPrintState=ssInputState=ssChoice=0;
         ssPrintRepeat=0;
+      }
+    }
+  }
+}
+
+
+//MENU 3 STARTS
+
+void pcbPrintStuff()
+{
+  if(pcbPrintRepeat==0)
+  {
+    if(pcbPrintState==0)
+    {
+      Serial.println("\n\n\n\n\nWELCOME TO POLLUTION CONTROL BOARD PORTAL");
+      Serial.print("You have ");
+      Serial.print(ssDue);
+      Serial.println(" request pending");
+      Serial.println("\nChoose an action to perform\n");
+      Serial.println("\n1.Grant Permissions");
+      Serial.println("2.Check emissions of a vehicle");
+      Serial.println("3.Change standard limits");
+      Serial.println("4.Logout");
+      pcbPrintState++;
+    }
+    else if(pcbPrintState==1)
+    {
+      if(pcbChoice==1)
+      {
+        if(ssDue==0)
+        {
+          Serial.println("\nNone of the registered vehicles await for permission");
+          Serial.println("\nRedirecting to Home Page in 5 seconds");
+          delay(5000);
+          pcbPrintState=pcbInputState=pcbChoice=0;
+          pcbPrintRepeat=-1;
+        }
+        else
+        {
+          Serial.print("The vehicle with registration number ");
+          Serial.print(veh_reg);
+          Serial.println(" awaits for your permission");
+          Serial.print("It was serviced in the service centre with registration number ");
+          Serial.println(ss_reg);
+          Serial.print("Its current emission levels are ");
+          Serial.println(userSensorReading);
+          Serial.println("\nDo you wish to grant permission?");
+          Serial.println("\n1.YES\n2.NO");
+          pcbPrintState++;
+        }
+      }
+      else if(pcbChoice==2)
+      {
+        Serial.println("\n\nEnter the registration number of the vehicle you wish to examine");
+        pcbPrintState++;
+      }
+      else if(pcbChoice==3)
+      {
+        Serial.println("\n\nWhich values you wish to change?\n\n1.Limiting Emission Values\n2.Minimum time limit\n3.Extended time limit");
+        pcbPrintState++;
+      }
+      else if(pcbChoice==4)
+      {
+        Serial.println("Logged out successfully");
+        pcbPrintState=pcbInputState=pcbChoice=pcbChangeChoice=0;
+        pcbPrintRepeat=-1;
+        printState=inputState=printRepeat=inputRepeat=loginType=0;
+        menuStatus=0;
+      }
+    }
+    else if(pcbPrintState==2)
+    {
+      if(pcbChoice==1)
+      {
+        if(pcbPerm==1)
+        {
+          Serial.println("\nPermission Granted");
+          Serial.println("\nRedirecting to Home Page in 5 seconds");
+          delay(5000);
+          pcbPrintState=pcbInputState=pcbChoice=pcbChangeChoice=0;
+          pcbPrintRepeat=-1;
+          ssDue--;
+        }
+        else if(pcbPerm==0)
+        {
+          Serial.println("\nPermission Denied");
+          Serial.println("\nRedirecting to Home Page in 5 seconds");
+          delay(5000);
+          pcbPrintState=pcbInputState=pcbChoice=pcbChangeChoice=0;
+          pcbPrintRepeat=-1;
+        }
+      }
+      else if(pcbChoice==2)
+      {
+        if(strcmp(pcb_veh_reg,veh_reg)==0)
+        {
+          Serial.print("Record of ");
+          Serial.print(veh_reg);
+          Serial.println(" found");
+          Serial.print("Its current emission levels are ");
+          Serial.println(userSensorReading);
+        }
+        else
+        {
+          Serial.print("\nNo records found for the vehicle ");
+          Serial.println(pcb_veh_reg);
+          Serial.println("\nKindly recheck the entered field");
+        }
+        Serial.println("\nRedirecting to Home Page in 5 seconds");
+        delay(5000);
+        pcbPrintState=pcbInputState=pcbChoice=pcbChangeChoice=0;
+        pcbPrintRepeat=-1;
+      }
+      else if(pcbChoice==3)
+      {
+        Serial.println("\nEnter new value for the chosen parameter");
+        pcbPrintState++;
+      }
+    }
+    pcbPrintRepeat++;
+  }
+}
+
+
+void pcbInputStuff()
+{
+  if(pcbInputState==0)
+  {
+    while(Serial.available()>0)
+    {
+      temp=Serial.read();
+      if(temp!='\r' && i<19)
+      {
+        input[i++]=temp;
+      }
+      temp2=1;
+    }
+    if(temp2==1)
+    {
+      input[i]='\0';
+      i=0;
+      pcbInputState++;
+      pcbPrintRepeat--;
+      pcbChoice = atoi(input);
+      temp2=0;
+    }
+  }
+  else if(pcbInputState==1)
+  {
+    if(pcbChoice==1)
+    {
+      while(Serial.available()>0)
+      {
+        temp=Serial.read();
+        if(temp!='\r' && i<19)
+        {
+          input[i++]=temp;
+        }
+        temp2=1;
+      }
+      if(temp2==1)
+      {
+        input[i]='\0';
+        i=0;
+        pcbInputState++;
+        pcbPrintRepeat--;
+        pcbPerm = atoi(input);
+        if(pcbPerm==2)
+        {
+          pcbPerm=0;
+        }
+        temp2=0;
+      }
+    }
+    else if(pcbChoice==2)
+    {
+      while(Serial.available()>0)
+      {
+        temp=Serial.read();
+        if(temp!='\r' && i<19)
+        {
+          pcb_veh_reg[i++]=temp;
+        }
+        temp2=1;
+        delay(1);
+      }
+      if(temp2==1)
+      {
+        pcb_veh_reg[i]='\0';
+        i=0;
+        pcbInputState++;
+        pcbPrintRepeat--;
+        temp2=0;
+      }
+    }
+    else if(pcbChoice==3)
+    {
+      while(Serial.available()>0)
+      {
+        temp=Serial.read();
+        if(temp!='\r' && i<19)
+        {
+          input[i++]=temp;
+        }
+        temp2=1;
+      }
+      if(temp2==1)
+      {
+        input[i]='\0';
+        i=0;
+        pcbInputState++;
+        pcbPrintRepeat--;
+        pcbChangeChoice = atoi(input);
+        temp2=0;
+      }
+    }
+  }
+  else if(pcbInputState==2)
+  {
+    if(pcbChoice==3)
+    {
+      while(Serial.available()>0)
+      {
+        temp=Serial.read();
+        if(temp!='\r' && i<19)
+        {
+          input[i++]=temp;
+        }
+        delay(1);
+        temp2=1;
+      }
+      if(temp2==1)
+      {
+        input[i]='\0';
+        i=0;
+        pcbInputState++;
+        pcbPrintRepeat--;
+        if(pcbChangeChoice==1)
+        {
+          limSensorReading = atoi(input);
+        }
+        else if(pcbChangeChoice==2)
+        {
+          timeLeft = atoi(input);
+        }
+        else if(pcbChangeChoice==3)
+        {
+          timeExtended = atoi(input);
+        }
+        temp2=0;
+        Serial.println("The updated values are ");
+        Serial.print("Limiting Emission Value = ");
+        Serial.println(limSensorReading);
+        Serial.print("Minimum time limit = ");
+        Serial.println(timeLeft);
+        Serial.print("Extended time limit = ");
+        Serial.println(timeExtended);
+        Serial.println("\nRedirecting to Home Page in 5 seconds");
+        delay(5000);
+        pcbPrintState=pcbInputState=pcbChoice=0;
+        pcbPrintRepeat=0;
       }
     }
   }
