@@ -22,7 +22,7 @@ char ss_reg[15]="PNB0025875", ss_veh_reg[15];
 
 //MENU 3 VARIABLES
 int pcbPrintRepeat=0, pcbPrintState=0, pcbInputState=0, pcbChoice=0, pcbPerm=0, pcbChangeChoice=0;
-char pcb_veh_reg[15];pcb_veh_reg
+char pcb_veh_reg[15];
 
 void setup() 
 {
