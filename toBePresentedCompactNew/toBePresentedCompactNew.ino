@@ -2,6 +2,7 @@
 int sensor = A4;
 int forwardMotor=6;
 int backwardMotor=5;
+int buzzer=9;
 
 int lockState=0, limSensorReading=60, timeLeft=30, timeExtended=20, firstRise=0, finalLock=0;
 unsigned long tlStart=0, tlCurrent=0, teStart=0, teCurrent=0; 
@@ -27,6 +28,8 @@ void setup()
   pinMode(forwardMotor,OUTPUT);
   pinMode(backwardMotor,OUTPUT);
   pinMode(sensor,INPUT);
+  pinMode(buzzer,OUTPUT);
+  digitalWrite(buzzer,LOW);
   analogWrite(forwardMotor, 0);
   analogWrite(backwardMotor, 0);
   Serial.begin(9600);
@@ -65,6 +68,10 @@ void checkEmissions()
   {
     firstRise=1;
     tlStart=millis();
+    digitalWrite(buzzer,HIGH);
+    delay(5000);
+    digitalWrite(buzzer,LOW);
+    
   }
   if(userSensorReading<limSensorReading && lockState==0 && firstRise==1 && userTimeExtendPerm==0 )
   {
@@ -75,9 +82,11 @@ void checkEmissions()
     tlCurrent=millis();
     if((millis()-tlStart)>(timeLeft*1000))
     {
+      digitalWrite(buzzer,HIGH);
       analogWrite(forwardMotor,255);
       delay(3000);
       analogWrite(forwardMotor,0);
+      digitalWrite(buzzer,LOW);
       lockState=1;
     }
   }
@@ -91,9 +100,11 @@ void checkEmissions()
     teCurrent = millis();
     if((millis()-teStart)>(timeExtended*1000))
     {
+      digitalWrite(buzzer,HIGH);
       analogWrite(forwardMotor,255);
       delay(3000);
       analogWrite(forwardMotor,0);
+      digitalWrite(buzzer,LOW);
       lockState=1;
       finalLock=1;
     }
